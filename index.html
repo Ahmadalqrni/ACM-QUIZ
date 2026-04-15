@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ACM Chapter — تحدي المعرفة</title>
+
+    <!-- ══════════════════════════════════════════════════════════
+       Firebase SDK (compat v9)
+  ══════════════════════════════════════════════════════════════ -->
+    <script
+      src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script
+      src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+    <style>
+    /* ═══════════════════════════════════ RESET & VARS ═══════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:       #5b6ef5;
+      --primary-light: #818cf8;
+      --primary-grad:  linear-gradient(135deg, #7c3aed, #4a7cf7);
+      --accent:        #60a5fa;
+      --accent2:       #a855f7;
+      --success:       #10b981;
+      --error:         #ef4444;
+      --warning:       #f59e0b;
+      --bg:            #07070f;
+      --bg2:           #0e0e1c;
+      --card:          rgba(255,255,255,0.055);
+      --card-border:   rgba(130,140,255,0.18);
+      --text:          #e8eaf6;
+      --muted:         rgba(200,210,255,0.5);
+      --radius:        16px;
+      --shadow:        0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, 'Arial', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      direction: rtl;
+      overflow-x: hidden;
+    }
+
+    /* ─── Glowing background orbs (matches ACM poster) ─── */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(80px);
+    }
+    body::before {
+      width: 600px; height: 600px;
+      top: -160px; right: -120px;
+      background: radial-gradient(circle, rgba(110,50,220,0.4) 0%, rgba(60,80,200,0.15) 45%, transparent 70%);
+    }
+    body::after {
+      width: 500px; height: 500px;
+      bottom: -120px; left: -80px;
+      background: radial-gradient(circle, rgba(50,80,210,0.38) 0%, rgba(80,50,200,0.12) 45%, transparent 70%);
+    }
+
+    /* Third orb — top center */
+    .orb-top-center {
+      position: fixed;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(140,80,255,0.22) 0%, transparent 70%);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .screen { position: relative; z-index: 1; }
+
+    /* ═══════════════════════════════════ LAYOUT ═════════════════════════════════════════ */
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .screen.active { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(130,150,255,0.15);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow), 0 0 0 1px rgba(100,80,255,0.06);
+      backdrop-filter: blur(16px);
+    }
+
+    .logo {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      margin-bottom: 16px;
+    }
+    .logo-fallback {
+      font-size: 1.8rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.8rem; font-weight: 800; text-align: center; margin-bottom: 8px;
+      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+    p  { font-size: 0.95rem; color: var(--muted); line-height: 1.6; }
+
+    /* ═══════════════════════════════════ FORM ELEMENTS ═════════════════════════════════ */
+    .input-group { margin-bottom: 16px; }
+    .input-group label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 1rem;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      direction: rtl;
+    }
+    input:focus, select:focus { border-color: var(--primary-light); }
+    select option { background: #1a1a3a; color: #fff; }
+
+    /* ═══════════════════════════════════ BUTTONS ════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed 0%, #4a7cf7 100%);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(100,80,240,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(100,80,240,0.55); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      border: 1px solid rgba(130,140,255,0.2);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.13); }
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+    }
+    .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+    .btn-accent {
+      background: linear-gradient(135deg, #5b6ef5, #a855f7);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(90,80,220,0.35);
+    }
+    .btn-accent:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(90,80,220,0.5); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-sm { padding: 10px 18px; font-size: 0.9rem; margin-top: 0; }
+    .btn-row { display: flex; gap: 10px; }
+    .btn-row .btn { flex: 1; }
+
+    /* ═══════════════════════════════════ ROLE SELECTION ════════════════════════════════ */
+    .role-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 28px;
+      border: 1.5px solid rgba(130,140,255,0.22);
+      border-radius: 18px;
+      cursor: pointer;
+      transition: all 0.22s;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
+      flex: 1;
+    }
+    .role-btn:hover {
+      border-color: var(--accent);
+      background: rgba(75,110,245,0.18);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(80,100,240,0.3);
+    }
+    .role-icon { font-size: 3rem; }
+    .role-label { font-size: 1.1rem; font-weight: 700; }
+
+    /* ═══════════════════════════════════ ROOM CODE ══════════════════════════════════════ */
+    .room-code-display {
+      background: linear-gradient(135deg, rgba(90,60,200,0.25), rgba(60,90,230,0.2));
+      border: 1.5px solid rgba(130,160,255,0.35);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+      margin: 16px 0;
+      box-shadow: 0 0 40px rgba(100,80,220,0.2), inset 0 0 30px rgba(80,80,180,0.08);
+      backdrop-filter: blur(8px);
+    }
+    .room-code-display .code {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      direction: ltr;
+    }
+    .room-code-display .code-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+
+    /* ═══════════════════════════════════ PLAYER LIST ═══════════════════════════════════ */
+    .player-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .player-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+    .player-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #4a7cf7);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(100,80,230,0.5);
+    }
+    .bot-avatar {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      box-shadow: 0 0 10px rgba(168,85,247,0.5);
+    }
+    .player-name { flex: 1; font-weight: 600; }
+    .player-status { font-size: 0.8rem; color: var(--muted); }
+    .status-answered { color: var(--success); }
+    .player-score {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary-light);
+      min-width: 50px;
+      text-align: left;
+      direction: ltr;
+    }
+    .player-count { font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; }
+
+    /* ═══════════════════════════════════ QUESTION SCREEN ═══════════════════════════════ */
+    .question-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 560px;
+      margin-bottom: 14px;
+    }
+    .q-number {
+      background: rgba(124,58,237,0.3);
+      border: 1px solid var(--primary);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    /* Timer */
+    .timer-wrap { display: flex; align-items: center; justify-content: center; }
+    .timer-svg { width: 70px; height: 70px; }
+    #student-timer-circle, #host-timer-circle {
+      stroke: #818cf8;
+      transition: stroke 0.5s;
+      filter: drop-shadow(0 0 6px rgba(130,140,248,0.6));
+    }
+    #student-timer-text, #host-timer-text {
+      font-size: 26px;
+      font-weight: 800;
+      fill: white;
+    }
+
+    /* Question image */
+    .q-image-wrap {
+      width: 100%;
+      max-width: 560px;
+      height: 200px;
+      background: #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .q-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #f3f4f6;
+    }
+    .q-image-error {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .q-image-error .icon { font-size: 2rem; }
+
+    .q-text {
+      font-size: 1.15rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 12px;
+      line-height: 1.5;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .hint-box {
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.4);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: var(--warning);
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 560px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .hint-box.visible { display: block; }
+
+    .answer-area {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 560px;
+      margin-bottom: 14px;
+    }
+    .answer-area input {
+      flex: 1;
+      font-size: 1.05rem;
+    }
+    .answer-area .btn { width: auto; flex-shrink: 0; }
+
+    .answer-sent {
+      display: none;
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.4);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--success);
+      font-weight: 700;
+      text-align: center;
+      width: 100%;
+      max-width: 560px;
+      font-size: 1rem;
+    }
+
+    /* Live players during question */
+    .live-players {
+      width: 100%;
+      max-width: 560px;
+    }
+    .live-players h3 { font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; }
+    .live-player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+    }
+    .live-player-chip {
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-status { font-size: 0.75rem; flex-shrink: 0; }
+
+    /* Host answered count */
+    .answered-count {
+      background: rgba(6,182,212,0.15);
+      border: 1px solid rgba(6,182,212,0.35);
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent);
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* ═══════════════════════════════════ LEADERBOARD ═══════════════════════════════════ */
+    .leaderboard { width: 100%; max-width: 500px; margin-top: 12px; }
+    .lb-header { font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+    }
+    .lb-rank { font-size: 1.2rem; width: 28px; flex-shrink: 0; text-align: center; }
+    .lb-name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-pts {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--primary-light);
+      min-width: 60px;
+      text-align: left;
+      direction: ltr;
+    }
+    .lb-row.lb-me {
+      background: linear-gradient(135deg, rgba(120,60,220,0.2), rgba(70,110,240,0.2));
+      border: 1px solid rgba(130,150,255,0.45);
+      box-shadow: 0 0 12px rgba(100,80,230,0.2);
+    }
+
+    /* ═══════════════════════════════════ QUESTION RESULT ═══════════════════════════════ */
+    .result-badge {
+      font-size: 4rem;
+      text-align: center;
+      margin: 16px 0 8px;
+    }
+    .result-correct-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .result-correct-text.correct { color: var(--success); }
+    .result-correct-text.wrong   { color: var(--error);   }
+    .result-score-earned {
+      text-align: center;
+      font-size: 1rem;
+      color: var(--primary-light);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .result-correct-answer {
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.35);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+    .result-correct-answer strong { color: var(--success); }
+    .gpt-result {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gpt-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+    /* ═══════════════════════════════════ FINAL RESULTS ═════════════════════════════════ */
+    .podium {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+      width: 100%;
+      max-width: 400px;
+    }
+    .podium-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+    .podium-medal { font-size: 2rem; }
+    .podium-name {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .podium-score { font-size: 0.8rem; color: var(--primary-light); font-weight: 700; }
+    .podium-block {
+      width: 100%;
+      border-radius: 10px 10px 4px 4px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+    }
+    .podium-item:nth-child(1) .podium-block { height: 80px; background: linear-gradient(to top, #c0a060, #ffd700); }
+    .podium-item:nth-child(2) .podium-block { height: 55px; background: linear-gradient(to top, #888, #c0c0c0); }
+    .podium-item:nth-child(3) .podium-block { height: 40px; background: linear-gradient(to top, #7a4a20, #cd7f32); }
+
+    .badges-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .badge {
+      background: linear-gradient(135deg, rgba(120,60,220,0.25), rgba(70,110,240,0.2));
+      border: 1px solid rgba(140,160,255,0.4);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: popIn 0.4s ease;
+      box-shadow: 0 0 14px rgba(100,80,230,0.2);
+    }
+    @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* ═══════════════════════════════════ CONFETTI ═══════════════════════════════════════ */
+    #confetti-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+    }
+
+    /* ═══════════════════════════════════ MISC ═══════════════════════════════════════════ */
+    .error-msg {
+      color: var(--error);
+      font-size: 0.88rem;
+      text-align: center;
+      margin-top: 8px;
+      min-height: 20px;
+    }
+    .success-msg {
+      color: var(--success);
+      font-size: 0.88rem;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .divider {
+      height: 1px;
+      background: var(--card-border);
+      margin: 16px 0;
+    }
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .tag-cs   { background: rgba(99,102,241,0.25); color: #a5b4fc; }
+    .tag-ee   { background: rgba(245,158,11,0.25); color: #fde68a; }
+    .tag-arch { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+    .tag-none { background: rgba(156,163,175,0.25); color: #d1d5db; }
+
+    .waiting-anim {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 20px 0;
+    }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1.1); opacity: 1; } }
+
+    .firebase-notice {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .firebase-notice .card { max-width: 520px; background: #1a1a3a; }
+    .firebase-notice code {
+      display: block;
+      background: #0d0d20;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      margin: 10px 0;
+      color: #93c5fd;
+      direction: ltr;
+      text-align: left;
+      word-break: break-all;
+    }
+
+    /* ═══════════════════════════════════ SCROLLBAR ══════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+
+    /* ═══════════════════════════════════ RESPONSIVE ═════════════════════════════════════ */
+    @media (max-width: 420px) {
+      .card { padding: 20px 16px; }
+      h1 { font-size: 1.5rem; }
+      .room-code-display .code { font-size: 2.2rem; letter-spacing: 2px; }
+      .q-text { font-size: 1rem; }
+    }
+  </style>
+  </head>
+  <body>
+
+    <!-- Orbs -->
+    <div class="orb-top-center"></div>
+    <!-- ═══════════════════════════ CONFETTI ══════════════════════════════ -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 1 — ROLE SELECTION
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-role" class="screen active">
+      <div style="text-align:center; margin-bottom: 24px; margin-top: 20px;">
+        <img src="acm-logo.png" class="logo" id="main-logo" alt="ACM Chapter"
+          onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='block'" />
+        <div id="logo-fallback" class="logo-fallback" style="display:none">🎓
+          ACM Chapter</div>
+        <h1 style="margin-top:4px;">تحدي المعرفة</h1>
+        <p style="margin-top:6px;">اختر دورك للبدء</p>
+      </div>
+      <div style="display:flex; gap:14px; width:100%; max-width:420px;">
+        <button class="role-btn" onclick="chooseRole('host')">
+          <span class="role-icon">🎮</span>
+          <span class="role-label">أنا مشرف</span>
+          <span style="font-size:0.78rem; color:var(--muted);">Host Panel</span>
+        </button>
+        <button class="role-btn" onclick="chooseRole('student')">
+          <span class="role-icon">👨‍🎓</span>
+          <span class="role-label">أنا طالب</span>
+          <span style="font-size:0.78rem; color:var(--muted);">Join Quiz</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 2 — HOST PASSWORD
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-host-password" class="screen">
+      <div style="text-align:center; margin-bottom:20px; margin-top:20px;">
+        <div style="font-size:2.5rem;">🔐</div>
+        <h2 style="margin-top:8px;">كلمة مرور المشرف</h2>
+      </div>
+      <div class="card">
+        <div class="input-group">
+          <label>أدخل كلمة المرور</label>
+          <input type="password" id="host-pw-input" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter') verifyHostPw()" />
+        </div>
+        <button class="btn btn-primary" onclick="verifyHostPw()">دخول
+          🔓</button>
+        <button class="btn btn-secondary" style="margin-top:8px;"
+          onclick="showScreen('screen-role')">رجوع</button>
+        <div class="error-msg" id="pw-error"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 3 — HOST CREATE ROOM
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-host-create" class="screen">
+      <div style="text-align:center; margin-bottom:20px; margin-top:16px;">
+        <img src="acm-logo.png" class="logo" style="width:80px;height:80px;"
+          alt="ACM"
+          onerror="this.style.display='none'" />
+        <h1>إنشاء غرفة جديدة</h1>
+      </div>
+      <div class="card">
+        <div class="input-group">
+          <label>التخصص</label>
+          <select id="host-major-select">
+            <option value="cs">Computer Engineering — هندسة الحاسوب</option>
+            <option value="ee">Electrical Engineering — هندسة الكهرباء</option>
+            <option value="arch">Architecture — العمارة</option>
+            <option value="none">No Major — للجميع</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="hostCreateRoom()">إنشاء غرفة
+          جديدة 🚀</button>
+        <div class="error-msg" id="create-error"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 4 — HOST LOBBY
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-host-lobby" class="screen">
+      <div style="width:100%; max-width:500px;">
+        <div style="text-align:center; margin-bottom:10px; margin-top:10px;">
+          <div id="lobby-room-code-display" class="room-code-display">
+            <div class="code-label">امسح QR أو أدخل الكود</div>
+            <div class="code" id="lobby-code">----</div>
+            <div style="font-size:0.78rem; color:var(--muted); margin-top:4px;"
+              id="lobby-major-tag">—</div>
+            <!-- QR Code -->
+            <div
+              style="margin-top:14px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <img id="lobby-qr" src alt="QR Code"
+                style="width:160px; height:160px; border-radius:12px; background:#fff; padding:8px; display:none;" />
+              <div style="font-size:0.78rem; color:var(--muted);">📱 الطلاب
+                يمسحون هذا للانضمام</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="player-count" id="lobby-count">⏳ في انتظار الطلاب...</div>
+          <ul class="player-list" id="lobby-player-list"></ul>
+          <div class="divider"></div>
+          <button class="btn btn-success" id="btn-start-game" disabled
+            onclick="hostStartGame()">
+            ابدأ اللعبة ▶
+          </button>
+          <p style="text-align:center; font-size:0.82rem; margin-top:8px;"
+            id="start-hint">انتظر انضمام طالبين على الأقل</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 5 — HOST QUESTION VIEW
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-host-question" class="screen">
+      <div class="question-header">
+        <div class="q-number" id="host-q-number">سؤال 1 / 5</div>
+        <div class="timer-wrap">
+          <svg class="timer-svg" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none"
+              stroke="rgba(255,255,255,0.1)" stroke-width="9" />
+            <circle id="host-timer-circle" cx="60" cy="60" r="50" fill="none"
+              stroke-width="9" stroke-dasharray="314" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 60 60)" />
+            <text id="host-timer-text" x="60" y="60" text-anchor="middle"
+              dominant-baseline="central" fill="white" font-size="28"
+              font-weight="bold">60</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="q-image-wrap">
+        <img id="host-q-img" class="q-image" src alt="صورة السؤال"
+          onerror="this.style.display='none'; document.getElementById('host-img-err').style.display='flex'" />
+        <div id="host-img-err" class="q-image-error">
+          <span class="icon">🖼️</span>
+          <span>تعذر تحميل الصورة</span>
+        </div>
+      </div>
+
+      <div class="q-text" id="host-q-text"></div>
+
+      <div class="answered-count" id="host-answered-count">⌛ 0 / 0 أجابوا</div>
+
+      <div style="width:100%; max-width:560px;">
+        <div class="lb-header">🏆 الترتيب المؤقت</div>
+        <div id="host-live-lb"></div>
+      </div>
+
+      <div style="width:100%;max-width:560px;margin-top:12px;">
+        <button class="btn btn-accent" id="btn-next-q"
+          onclick="hostNextQuestion()" disabled>
+          عرض النتيجة 📊
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 6 — HOST FINAL RESULTS
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-host-final" class="screen">
+      <div style="text-align:center; margin-top:10px; margin-bottom:16px;">
+        <div style="font-size:3rem;">🏆</div>
+        <h1>النتيجة النهائية</h1>
+      </div>
+      <div style="width:100%;max-width:500px;">
+        <div class="podium" id="host-podium"></div>
+        <div class="card" style="padding:16px;">
+          <div class="lb-header">📊 الترتيب الكامل</div>
+          <div id="host-final-lb"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px;"
+          onclick="hostNewGame()">لعبة جديدة 🔄</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 7 — STUDENT JOIN
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-student-join" class="screen">
+      <div style="text-align:center; margin-bottom:20px; margin-top:16px;">
+        <img src="acm-logo.png" class="logo" alt="ACM"
+          onerror="this.style.display='none'; document.getElementById('s-logo-fallback').style.display='block'" />
+        <div id="s-logo-fallback" class="logo-fallback" style="display:none">🎓
+          ACM Chapter</div>
+        <h1>انضم للتحدي</h1>
+        <p>أدخل بياناتك للمشاركة</p>
+      </div>
+      <div class="card">
+        <div class="input-group">
+          <label>كود الغرفة</label>
+          <input type="text" id="join-code" placeholder="مثال: TECH-4821"
+            maxlength="9"
+            oninput="this.value=this.value.toUpperCase()"
+            style="text-align:center; font-size:1.2rem; letter-spacing:2px; direction:ltr;" />
+        </div>
+        <div class="input-group">
+          <label>اسمك</label>
+          <input type="text" id="join-name" placeholder="أدخل اسمك"
+            maxlength="20" />
+        </div>
+        <div class="input-group">
+          <label>تخصصك</label>
+          <select id="join-major" onchange="checkNoMajor()">
+            <option value="cs">Computer Engineering</option>
+            <option value="ee">Electrical Engineering</option>
+            <option value="arch">Architecture</option>
+            <option value="none">No major / just want to play</option>
+          </select>
+        </div>
+        <div id="no-major-note"
+          style="display:none; background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.3); border-radius:10px; padding:10px 14px; font-size:0.88rem; color:var(--accent); margin-bottom:12px;">
+          🤖 ستلعب ضد GPT-Bot بأسئلة مبسطة!
+        </div>
+        <button class="btn btn-primary" onclick="studentJoin()">انضم للتحدي
+          🎯</button>
+        <div class="error-msg" id="join-error"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 8 — STUDENT LOBBY (WAITING)
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-student-lobby" class="screen">
+      <div style="text-align:center; margin-top:30px; margin-bottom:20px;">
+        <img src="acm-logo.png" class="logo" style="width:80px;height:80px;"
+          alt="ACM"
+          onerror="this.style.display='none'" />
+        <h2>في انتظار المشرف لبدء اللعبة...</h2>
+        <div class="waiting-anim">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="card" style="max-width:380px;">
+        <div class="player-count" id="student-lobby-count">اللاعبون</div>
+        <ul class="player-list" id="student-lobby-list"></ul>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 9 — STUDENT QUESTION
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-student-question" class="screen">
+      <div class="question-header">
+        <div class="q-number" id="student-q-number">سؤال 1 / 5</div>
+        <div class="timer-wrap">
+          <svg class="timer-svg" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none"
+              stroke="rgba(255,255,255,0.1)" stroke-width="9" />
+            <circle id="student-timer-circle" cx="60" cy="60" r="50" fill="none"
+              stroke-width="9" stroke-dasharray="314" stroke-dashoffset="0"
+              stroke-linecap="round" transform="rotate(-90 60 60)" />
+            <text id="student-timer-text" x="60" y="60" text-anchor="middle"
+              dominant-baseline="central" fill="white" font-size="28"
+              font-weight="bold">60</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="q-image-wrap">
+        <img id="student-q-img" class="q-image" src alt="صورة السؤال"
+          onerror="this.style.display='none'; document.getElementById('student-img-err').style.display='flex'" />
+        <div id="student-img-err" class="q-image-error">
+          <span class="icon">🖼️</span>
+          <span>تعذر تحميل الصورة</span>
+        </div>
+      </div>
+
+      <div class="q-text" id="student-q-text"></div>
+
+      <div class="hint-box" id="student-hint">💡 <span
+          id="student-hint-text"></span></div>
+
+      <div class="answer-area">
+        <input type="text" id="student-answer-input"
+          placeholder="اكتب إجابتك هنا..." maxlength="80"
+          onkeydown="if(event.key==='Enter') studentSubmitAnswer()" />
+        <button class="btn btn-primary btn-sm"
+          onclick="studentSubmitAnswer()">إرسال</button>
+      </div>
+
+      <div class="answer-sent" id="answer-sent-msg">تم إرسال إجابتك ✓</div>
+
+      <div class="live-players">
+        <h3>اللاعبون الآن</h3>
+        <div class="live-player-grid" id="live-player-grid"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 10 — STUDENT PER-QUESTION RESULT
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-student-result" class="screen">
+      <div style="width:100%; max-width:480px;">
+        <div class="result-badge" id="result-emoji"></div>
+        <div class="result-correct-text" id="result-correct-text"></div>
+        <div class="result-score-earned" id="result-score-earned"></div>
+
+        <div class="result-correct-answer" id="result-correct-answer"
+          style="display:none">
+          ✅ الإجابة الصحيحة: <strong id="correct-answer-text"></strong>
+        </div>
+
+        <div class="gpt-result" id="gpt-result-box">
+          <span class="gpt-icon">🤖</span>
+          <span id="gpt-result-text">GPT-Bot: ...</span>
+        </div>
+
+        <div class="card" style="padding:16px; margin-bottom:14px;">
+          <div class="lb-header">🏆 الترتيب بعد هذا السؤال</div>
+          <div id="student-result-lb"></div>
+        </div>
+
+        <p style="text-align:center; font-size:0.88rem; color:var(--muted);">⏳
+          في انتظار المشرف للمتابعة...</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     SCREEN 11 — STUDENT FINAL RESULTS
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="screen-student-final" class="screen">
+      <div style="text-align:center; margin-top:10px; margin-bottom:12px;">
+        <img src="acm-logo.png" style="width:70px;height:70px;" alt="ACM"
+          onerror="this.style.display='none'" />
+        <h1 style="margin-top:4px;">النتيجة النهائية</h1>
+      </div>
+      <div style="width:100%; max-width:480px;">
+        <div class="podium" id="student-podium"></div>
+        <div class="badges-row" id="student-badges"></div>
+        <div class="card" style="padding:16px; margin-bottom:14px;">
+          <div class="lb-header">📊 الترتيب الكامل</div>
+          <div id="student-final-lb"></div>
+        </div>
+        <button class="btn btn-primary" onclick="studentPlayAgain()">العب مرة
+          ثانية 🔄</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     FIREBASE SETUP NOTICE (shown if config not filled)
+════════════════════════════════════════════════════════════════════════════ -->
+    <div id="firebase-notice" class="firebase-notice" style="display:none;">
+      <div class="card">
+        <h2 style="color:var(--warning); margin-bottom:12px;">⚙️ إعداد Firebase
+          مطلوب</h2>
+        <p>لتشغيل اللعبة، يجب إعداد Firebase Realtime Database:</p>
+        <ol
+          style="margin: 12px 0; padding-right: 20px; font-size:0.9rem; line-height:2;">
+          <li>اذهب إلى <a href="https://console.firebase.google.com"
+              target="_blank"
+              style="color:var(--accent);">console.firebase.google.com</a></li>
+          <li>أنشئ مشروعاً جديداً</li>
+          <li>فعّل <strong>Realtime Database</strong> (في Test Mode)</li>
+          <li>انسخ إعدادات المشروع</li>
+          <li>افتح <code>index.html</code> وابحث عن <code>firebaseConfig</code>
+            واستبدل القيم</li>
+        </ol>
+        <p style="font-size:0.82rem; color:var(--muted);">قواعد الـ Database
+          (للتطوير):</p>
+        <code>{ "rules": { ".read": true, ".write": true } }</code>
+        <button class="btn btn-secondary" style="margin-top:14px;"
+          onclick="document.getElementById('firebase-notice').style.display='none'">
+          أغلق (للتجربة بدون Firebase)
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════════════════════ -->
+    <script>
+
+/* ══════════════════════════════════════════════════════════
+   ██████  FIREBASE CONFIG — استبدل هذه القيم بمشروعك
+   ══════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey:            "AIzaSyAnl1p0K6YPfEbW8PW286PKPO6fbvNx6Ug",
+  authDomain:        "acm-quiz.firebaseapp.com",
+  databaseURL:       "https://acm-quiz-default-rtdb.firebaseio.com",
+  projectId:         "acm-quiz",
+  storageBucket:     "acm-quiz.firebasestorage.app",
+  messagingSenderId: "25440792710",
+  appId:             "1:25440792710:web:e8357d1c3afa591d766107"
+};
+
+const HOST_PASSWORD = 'ACM2025';
+
+/* ══════════════════════════════════════════════════════════
+   QUESTIONS DATABASE
+   ══════════════════════════════════════════════════════════ */
+const QUESTIONS = {
+  cs: [
+    {
+      image:    'ram.jpg',
+      question: 'ما اسم هذه القطعة وما وظيفتها؟',
+      hint:     'تخزن البيانات مؤقتاً أثناء تشغيل البرامج',
+      accepted: ['ram','ذاكرة','ذاكرة وصول عشوائي','memory']
+    },
+    {
+      image:    'CPU.jpg',
+      question: 'ما هذه القطعة وما دورها في الحاسوب؟',
+      hint:     'تُعتبر عقل الحاسوب',
+      accepted: ['cpu','معالج','processor','المعالج المركزي']
+    },
+    {
+      image:    '/cs/motherboard.jpg',
+      question: 'ما اسم هذه القطعة التي تربط جميع مكونات الحاسوب؟',
+      hint:     'كل القطع الأخرى تتصل بها مباشرة',
+      accepted: ['motherboard','لوحة أم','اللوحة الأم','لوحة']
+    },
+    {
+      image:    '/cs/gpu.jpg',
+      question: 'ما وظيفة هذه القطعة وفي أي تطبيقات تُستخدم؟',
+      hint:     'تُستخدم في الألعاب والتصميم ثلاثي الأبعاد',
+      accepted: ['gpu','كارت شاشة','معالج رسوميات','graphics card','كرت شاشة']
+    },
+    {
+      image:    '/cs/ssd.jpg',
+      question: 'ما الفرق بين هذه القطعة والـ RAM؟',
+      hint:     'تخزين دائم لا يُمسح عند إيقاف الجهاز',
+      accepted: ['ssd','هارد','قرص صلب','storage','hard disk']
+    }
+  ],
+
+
+
+
+
+  ee: [
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Diodes.jpg/320px-Diodes.jpg',
+      question: 'ما اسم هذا المكون الكهربائي؟',
+      hint:     'يسمح بمرور التيار في اتجاه واحد فقط',
+      accepted: ['diode','ثنائي','صمام ثنائي','ديود']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Capacitors_%287189597135%29.jpg/320px-Capacitors_%287189597135%29.jpg',
+      question: 'ما وظيفة هذا المكون في الدوائر الكهربائية؟',
+      hint:     'يخزن الشحنة الكهربائية ويُطلقها عند الحاجة',
+      accepted: ['capacitor','مكثف','كابسيتور']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Resistors.jpg/320px-Resistors.jpg',
+      question: 'ما اسم هذا المكون ووظيفته؟',
+      hint:     'يُقلل تدفق التيار الكهربائي في الدائرة',
+      accepted: ['resistor','مقاومة','مقاوم','ريزيستور']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Pole_mounted_distribution_transformer_with_high_voltage_surge_arrestors_%28India%29.jpg/240px-Pole_mounted_distribution_transformer_with_high_voltage_surge_arrestors_%28India%29.jpg',
+      question: 'ما وظيفة هذا الجهاز الكهربائي؟',
+      hint:     'يرفع أو يخفض قيمة الجهد الكهربائي',
+      accepted: ['transformer','محول','ترانسفورمر','محول كهربائي']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/LEDs.jpg/320px-LEDs.jpg',
+      question: 'ما اسم هذه المكونات وأين تُستخدم؟',
+      hint:     'تُستخدم في الإضاءة الحديثة وهي أكثر كفاءة من المصباح التقليدي',
+      accepted: ['led','ليد','صمام ضوئي','light emitting diode']
+    }
+  ],
+  arch: [
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Doric_order_closeup.jpg/240px-Doric_order_closeup.jpg',
+      question: 'ما اسم هذا النوع من الأعمدة في العمارة الكلاسيكية؟',
+      hint:     'النظام المعماري الأبسط والأقدم في اليونان',
+      accepted: ['دوري','دوريك','doric','العمود الدوري']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/DrComplex.jpg/320px-Drcomplex.jpg',
+      question: 'ما اسم هذا العنصر الإنشائي الأفقي؟',
+      hint:     'يمتد أفقياً بين عمودين لحمل الأثقال',
+      accepted: ['كمرة','عارضة','beam','جائز','كمر']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Pratt_Truss.svg/320px-Pratt_Truss.svg.png',
+      question: 'ما اسم هذا الهيكل الإنشائي المثلثي؟',
+      hint:     'يُستخدم في الجسور والأسقف لتوزيع الأحمال',
+      accepted: ['truss','جمالون','تروس','جمالة']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Floorplan_-_The_Craftsman_Bungalow.jpg/320px-Floorplan_-_The_Craftsman_Bungalow.jpg',
+      question: 'ما اسم هذا المخطط المعماري؟',
+      hint:     'يُظهر الطابق من منظور أفقي من الأعلى',
+      accepted: ['مسقط أفقي','floor plan','مسقط','مخطط','floor-plan']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Concrete_blocks.jpg/320px-Concrete_blocks.jpg',
+      question: 'ما اسم هذه المادة الإنشائية الأساسية؟',
+      hint:     'خليط من الإسمنت والرمل والماء والحصى',
+      accepted: ['خرسانة','بيتون','concrete','خرسانة مسلحة']
+    }
+  ],
+  none: [
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Swissbit_2GB_PC2-5300U-555.jpg/320px-Swissbit_2GB_PC2-5300U-555.jpg',
+      question: 'ما اسم هذه القطعة؟',
+      hint:     'تساعد الحاسوب على تشغيل البرامج',
+      accepted: ['ram','ذاكرة','memory','ذاكرة وصول عشوائي']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Intel_CPU_Core_i7_2600K_Sandy_Bridge_top.jpg/320px-Intel_CPU_Core_i7_2600K_Sandy_Bridge_top.jpg',
+      question: 'ما هذه القطعة في الحاسوب؟',
+      hint:     'عقل الجهاز',
+      accepted: ['cpu','معالج','processor','المعالج']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/LEDs.jpg/320px-LEDs.jpg',
+      question: 'ما اسم هذه المكونات الصغيرة؟',
+      hint:     'تُستخدم في الإضاءة',
+      accepted: ['led','ليد','صمام ضوئي']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Doric_order_closeup.jpg/240px-Doric_order_closeup.jpg',
+      question: 'ما هذا الشكل المعماري؟',
+      hint:     'يُستخدم في المباني القديمة',
+      accepted: ['دوري','دوريك','doric','عمود']
+    },
+    {
+      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Pratt_Truss.svg/320px-Pratt_Truss.svg.png',
+      question: 'ما اسم هذا الهيكل؟',
+      hint:     'شكل مثلثي يُستخدم في الجسور',
+      accepted: ['truss','جمالون','تروس','هيكل مثلثي']
+    }
+  ]
+};
+
+/* ══════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════ */
+let db = null;
+let activeListeners = [];
+
+let S = {
+  role:            null,
+  roomCode:        null,
+  playerId:        null,
+  playerName:      null,
+  playerMajor:     null,
+  roomMajor:       null,
+  currentQuestion: 0,
+  questionStartMs: 0,
+  answered:        false,
+  timerInterval:   null,
+  questions:       []
+};
+
+/* ══════════════════════════════════════════════════════════
+   FIREBASE INIT
+   ══════════════════════════════════════════════════════════ */
+function initFirebase() {
+  if (firebaseConfig.apiKey === 'YOUR_API_KEY') {
+    document.getElementById('firebase-notice').style.display = 'flex';
+    return false;
+  }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+
+    // Test connection
+    db.ref('.info/connected').on('value', snap => {
+      const connected = snap.val();
+      console.log('Firebase connected:', connected);
+    });
+
+    return true;
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    alert('خطأ Firebase: ' + e.message);
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   UTILS
+   ══════════════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function genRoomCode() {
+  return 'TECH-' + Math.floor(1000 + Math.random() * 9000);
+}
+
+function genPlayerId() {
+  return 'p_' + Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+}
+
+function checkAnswer(input, accepted) {
+  const u = input.toLowerCase().trim();
+  if (!u) return false;
+  return accepted.some(a => {
+    const ac = a.toLowerCase().trim();
+    return u === ac || u.includes(ac) || ac.includes(u);
+  });
+}
+
+function calcScore(elapsedSec) {
+  if (elapsedSec <= 10) return 1000;
+  if (elapsedSec <= 30) return  700;
+  if (elapsedSec <= 60) return  400;
+  return 0;
+}
+
+function majorLabel(m) {
+  const mp = {cs:'💻 Computer Engineering', ee:'⚡ Electrical Engineering', arch:'🏛 Architecture', none:'🌐 No Major'};
+  return mp[m] || m;
+}
+
+function rankEmoji(i) {
+  return ['🥇','🥈','🥉'][i] || `${i+1}.`;
+}
+
+function addListener(ref, event, cb) {
+  ref.on(event, cb);
+  activeListeners.push({ref, event, cb});
+}
+
+function removeAllListeners() {
+  activeListeners.forEach(({ref, event, cb}) => { try { ref.off(event, cb); } catch(e){} });
+  activeListeners = [];
+}
+
+function stopTimer() {
+  if (S.timerInterval) { clearInterval(S.timerInterval); S.timerInterval = null; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TIMER
+   ══════════════════════════════════════════════════════════ */
+const CIRC = 2 * Math.PI * 50; // 314.16
+
+function startTimer(durationSec, circleId, textId, onTick, onEnd) {
+  stopTimer();
+  const start = Date.now();
+  const endMs = start + durationSec * 1000;
+
+  function tick() {
+    const now = Date.now();
+    const remaining = Math.max(0, (endMs - now) / 1000);
+    const displayed = Math.ceil(remaining);
+
+    const circle = document.getElementById(circleId);
+    const text   = document.getElementById(textId);
+    if (!circle || !text) return;
+
+    const offset = CIRC * (1 - remaining / durationSec);
+    circle.style.strokeDashoffset = offset;
+    text.textContent = displayed;
+
+    if (remaining <= 15)      { circle.style.stroke = '#f87171'; circle.style.filter = 'drop-shadow(0 0 8px rgba(248,113,113,0.7))'; }
+    else if (remaining <= 30) { circle.style.stroke = '#fbbf24'; circle.style.filter = 'drop-shadow(0 0 8px rgba(251,191,36,0.6))'; }
+    else                      { circle.style.stroke = '#818cf8'; circle.style.filter = 'drop-shadow(0 0 6px rgba(130,140,248,0.6))'; }
+
+    if (onTick) onTick(remaining);
+
+    if (remaining <= 0) {
+      stopTimer();
+      if (onEnd) onEnd();
+    }
+  }
+
+  tick();
+  S.timerInterval = setInterval(tick, 200);
+}
+
+/* ══════════════════════════════════════════════════════════
+   LEADERBOARD RENDER
+   ══════════════════════════════════════════════════════════ */
+function buildLeaderboardRows(sortedPlayers, myId, includeGpt) {
+  let html = '';
+  sortedPlayers.forEach((p, i) => {
+    const isMe = p.id === myId;
+    html += `<div class="lb-row ${isMe ? 'lb-me' : ''}">
+      <span class="lb-rank">${rankEmoji(i)}</span>
+      <span class="lb-name">${escHtml(p.name)}${p.id==='gptBot'?' 🤖':''}</span>
+      <span class="lb-pts">${p.score} pts</span>
+    </div>`;
+  });
+  return html || '<p style="color:var(--muted); text-align:center; padding:10px;">لا يوجد لاعبون بعد</p>';
+}
+
+function buildPodium(sorted) {
+  const top = [sorted[0], sorted[1], sorted[2]].filter(Boolean);
+  if (!top.length) return '';
+  // Display order: 2nd, 1st, 3rd
+  const order = [top[1], top[0], top[2]].filter(Boolean);
+  const ranks = top[1] ? [1, 0, 2] : [0];
+  let html = '';
+  const displayOrder = top.length >= 2 ? [top[1], top[0], top[2]].filter(Boolean) : top;
+  const rankIdxMap  = top.length >= 2 ? [1, 0, 2]                                 : [0];
+
+  displayOrder.forEach((p, di) => {
+    const ri = rankIdxMap[di] !== undefined ? rankIdxMap[di] : di;
+    html += `<div class="podium-item">
+      <div class="podium-medal">${rankEmoji(ri)}</div>
+      <div class="podium-name">${escHtml(p.name)}</div>
+      <div class="podium-score">${p.score} pts</div>
+      <div class="podium-block"></div>
+    </div>`;
+  });
+  return html;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getSortedPlayers(playersObj, gptBotObj) {
+  let arr = Object.entries(playersObj || {}).map(([id, p]) => ({ id, name: p.name || '?', score: p.score || 0, ...p }));
+  if (gptBotObj) arr.push({ id: 'gptBot', name: 'GPT-Bot', score: gptBotObj.score || 0 });
+  return arr.sort((a, b) => b.score - a.score);
+}
+
+/* ══════════════════════════════════════════════════════════
+   ROLE SELECTION
+   ══════════════════════════════════════════════════════════ */
+function chooseRole(role) {
+  if (role === 'host') {
+    showScreen('screen-host-password');
+    document.getElementById('host-pw-input').value = '';
+    document.getElementById('pw-error').textContent = '';
+    setTimeout(() => document.getElementById('host-pw-input').focus(), 100);
+  } else {
+    showScreen('screen-student-join');
+    document.getElementById('join-error').textContent = '';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOST — PASSWORD
+   ══════════════════════════════════════════════════════════ */
+function verifyHostPw() {
+  const pw = document.getElementById('host-pw-input').value.trim();
+  if (pw === HOST_PASSWORD) {
+    document.getElementById('pw-error').textContent = '';
+    showScreen('screen-host-create');
+  } else {
+    document.getElementById('pw-error').textContent = 'كلمة المرور غير صحيحة ❌';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOST — CREATE ROOM
+   ══════════════════════════════════════════════════════════ */
+async function hostCreateRoom() {
+  if (!db) { alert('Firebase غير مهيأ — تحقق من الإعدادات'); return; }
+
+  const errEl = document.getElementById('create-error');
+  errEl.textContent = '⏳ جارٍ الإنشاء...';
+
+  const major = document.getElementById('host-major-select').value;
+  const code  = genRoomCode();
+
+  S.roomCode  = code;
+  S.roomMajor = major;
+  S.role      = 'host';
+  S.questions = QUESTIONS[major];
+
+  try {
+    await db.ref(`rooms/${code}`).set({
+      major,
+      status:           'lobby',
+      currentQuestion:  0,
+      questionStartTime: 0,
+      players:          {},
+      gptBot:           { score: 0 }
+    });
+
+    errEl.textContent = '';
+    document.getElementById('lobby-code').textContent        = code;
+    document.getElementById('lobby-major-tag').textContent   = majorLabel(major);
+    document.getElementById('lobby-player-list').innerHTML   = '';
+    document.getElementById('lobby-count').textContent       = '⏳ في انتظار الطلاب...';
+    document.getElementById('btn-start-game').disabled       = true;
+    document.getElementById('start-hint').textContent        = 'انتظر انضمام طالبين على الأقل';
+
+    // Generate QR code with room code in URL
+    const baseUrl = window.location.href.split('?')[0];
+    const joinUrl = `${baseUrl}?room=${code}`;
+    const qrImg   = document.getElementById('lobby-qr');
+    qrImg.src     = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=1a0050&qzone=1`;
+    qrImg.style.display = 'block';
+
+    showScreen('screen-host-lobby');
+    listenHostLobby(code);
+    renderGptBotInLobby();
+
+  } catch(e) {
+    console.error('hostCreateRoom error:', e);
+    let msg = e.message || String(e);
+    if (msg.includes('permission') || msg.includes('PERMISSION')) {
+      msg = '❌ خطأ في الصلاحيات — اذهب إلى Firebase ← Realtime Database ← Rules وغيّر ".read" و ".write" إلى true ثم اضغط Publish';
+    }
+    errEl.textContent = msg;
+    errEl.style.whiteSpace = 'pre-wrap';
+    errEl.style.fontSize   = '0.82rem';
+  }
+}
+
+function renderGptBotInLobby() {
+  const list = document.getElementById('lobby-player-list');
+  if (!list.querySelector('[data-gpt]')) {
+    const li = document.createElement('li');
+    li.className = 'player-item';
+    li.setAttribute('data-gpt','1');
+    li.innerHTML = `<div class="player-avatar bot-avatar">🤖</div>
+      <span class="player-name">GPT-Bot</span>
+      <span class="player-status" style="color:var(--warning);">مدمج دائماً</span>`;
+    list.appendChild(li);
+  }
+}
+
+function listenHostLobby(code) {
+  removeAllListeners();
+  const ref = db.ref(`rooms/${code}/players`);
+  addListener(ref, 'value', snap => {
+    const players = snap.val() || {};
+    const count   = Object.keys(players).length;
+    document.getElementById('lobby-count').textContent = `👥 ${count} لاعبين انضموا`;
+
+    const list = document.getElementById('lobby-player-list');
+    list.innerHTML = '';
+    renderGptBotInLobby();
+    Object.entries(players).forEach(([id, p]) => {
+      const li = document.createElement('li');
+      li.className = 'player-item';
+      li.innerHTML = `<div class="player-avatar">${p.name?.[0]?.toUpperCase()||'?'}</div>
+        <span class="player-name">${escHtml(p.name)}</span>
+        <span class="tag tag-${p.major||'none'}">${majorLabel(p.major)}</span>`;
+      list.appendChild(li);
+    });
+
+    const canStart = count >= 2;
+    document.getElementById('btn-start-game').disabled = !canStart;
+    document.getElementById('start-hint').textContent = canStart ? '✅ يمكنك بدء اللعبة الآن' : 'انتظر انضمام طالبين على الأقل';
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOST — START GAME
+   ══════════════════════════════════════════════════════════ */
+async function hostStartGame() {
+  if (!db || !S.roomCode) return;
+  S.currentQuestion = 0;
+  await db.ref(`rooms/${S.roomCode}`).update({
+    status:            'question',
+    currentQuestion:   0,
+    questionStartTime: firebase.database.ServerValue.TIMESTAMP
+  });
+  showHostQuestion(0);
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOST — SHOW QUESTION
+   ══════════════════════════════════════════════════════════ */
+function showHostQuestion(qIdx) {
+  removeAllListeners();
+  stopTimer();
+  S.currentQuestion = qIdx;
+  const q = S.questions[qIdx];
+  if (!q) return;
+
+  hostInResultPhase = false;
+  document.getElementById('host-q-number').textContent = `سؤال ${qIdx+1} / 5`;
+  const btn = document.getElementById('btn-next-q');
+  btn.textContent = 'عرض النتيجة 📊';
+  btn.className   = 'btn btn-accent';
+  btn.disabled    = true;
+
+  // Image
+  const img = document.getElementById('host-q-img');
+  const err = document.getElementById('host-img-err');
+  img.style.display = 'block'; err.style.display = 'none';
+  img.src = q.image || 'acm-logo.png';
+
+  document.getElementById('host-q-text').textContent = q.question;
+  document.getElementById('host-answered-count').textContent = `⌛ 0 / ? أجابوا`;
+  document.getElementById('btn-next-q').disabled = true;
+  document.getElementById('host-live-lb').innerHTML = '';
+
+  showScreen('screen-host-question');
+
+  // Timer
+  startTimer(30, 'host-timer-circle', 'host-timer-text',
+    null,
+    () => {
+      document.getElementById('btn-next-q').disabled = false;
+      // auto-complete unanswered students
+      autoCompleteUnanswered(qIdx);
+    }
+  );
+
+  // GPT-Bot
+  runGptBot(qIdx);
+
+  // Listen to answers
+  const playersRef = db.ref(`rooms/${S.roomCode}/players`);
+  addListener(playersRef, 'value', snap => {
+    const players = snap.val() || {};
+    const total   = Object.keys(players).length;
+    let answered  = 0;
+    Object.values(players).forEach(p => {
+      if (p.answers && p.answers[`q${qIdx}`] && p.answers[`q${qIdx}`].answered) answered++;
+    });
+    document.getElementById('host-answered-count').textContent = `✅ ${answered} / ${total} أجابوا`;
+    if (answered >= total && total > 0) {
+      document.getElementById('btn-next-q').disabled = false;
+    }
+
+    // Live leaderboard
+    db.ref(`rooms/${S.roomCode}/gptBot`).once('value', gsnap => {
+      const sorted = getSortedPlayers(players, gsnap.val());
+      document.getElementById('host-live-lb').innerHTML = buildLeaderboardRows(sorted, null, true);
+    });
+  });
+}
+
+async function autoCompleteUnanswered(qIdx) {
+  if (!db || !S.roomCode) return;
+  const snap = await db.ref(`rooms/${S.roomCode}/players`).once('value');
+  const players = snap.val() || {};
+  const updates = {};
+  Object.entries(players).forEach(([id, p]) => {
+    if (!p.answers || !p.answers[`q${qIdx}`] || !p.answers[`q${qIdx}`].answered) {
+      updates[`players/${id}/answers/q${qIdx}`] = { answer:'', correct:false, score:0, answered:true };
+    }
+  });
+  if (Object.keys(updates).length) {
+    await db.ref(`rooms/${S.roomCode}`).update(updates);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOST — NEXT QUESTION  (two-phase: result → next question)
+   ══════════════════════════════════════════════════════════ */
+let hostInResultPhase = false;
+
+async function hostNextQuestion() {
+  if (!db || !S.roomCode) return;
+  const btn = document.getElementById('btn-next-q');
+
+  if (!hostInResultPhase) {
+    // Phase 1: show results to all students
+    hostInResultPhase = true;
+    stopTimer();
+    await autoCompleteUnanswered(S.currentQuestion);
+    await db.ref(`rooms/${S.roomCode}`).update({ status: 'result' });
+
+    btn.textContent = S.currentQuestion >= 4 ? 'إنهاء اللعبة 🏁' : 'السؤال التالي ⏭';
+    btn.className   = S.currentQuestion >= 4 ? 'btn btn-success' : 'btn btn-primary';
+    btn.disabled    = false;
+
+    // Refresh live leaderboard on host
+    const [pSnap, gSnap] = await Promise.all([
+      db.ref(`rooms/${S.roomCode}/players`).once('value'),
+      db.ref(`rooms/${S.roomCode}/gptBot`).once('value')
+    ]);
+    const sorted = getSortedPlayers(pSnap.val() || {}, gSnap.val());
+    document.getElementById('host-live-lb').innerHTML = buildLeaderboardRows(sorted, null, true);
+    document.getElementById('host-q-number').textContent = `سؤال ${S.currentQuestion+1} / 5 — النتائج`;
+  } else {
+    // Phase 2: advance to next question or finish
+    hostInResultPhase = false;
+    const next = S.currentQuestion + 1;
+    if (next >= 5) {
+      await db.ref(`rooms/${S.roomCode}`).update({ status: 'finished' });
+      showHostFinalResults();
+    } else {
+      S.currentQuestion = next;
+      await db.ref(`rooms/${S.roomCode}`).update({
+        status:            'question',
+        currentQuestion:   next,
+        questionStartTime: firebase.database.ServerValue.TIMESTAMP
+      });
+      showHostQuestion(next);
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   GPT-BOT
+   ══════════════════════════════════════════════════════════ */
+function runGptBot(qIdx) {
+  if (!db || !S.roomCode) return;
+  const delay   = 8000 + Math.random() * 12000; // 8–20s
+  const correct = Math.random() < 0.70;
+  const q       = S.questions[qIdx];
+
+  setTimeout(async () => {
+    // Check if question is still active
+    const snap = await db.ref(`rooms/${S.roomCode}/status`).once('value');
+    if (snap.val() !== 'question') return;
+
+    const answer   = correct ? q.accepted[0] : '—';
+    const elapsed  = delay / 1000;
+    const score    = correct ? calcScore(elapsed) : 0;
+
+    await db.ref(`rooms/${S.roomCode}/gptBot`).update({
+      [`answers/q${qIdx}`]: { answer, correct, score, answered: true }
+    });
+    await db.ref(`rooms/${S.roomCode}/gptBot/score`).transaction(s => (s || 0) + score);
+  }, delay);
+}
+
+/* ══════════════════════════════════════════════════════════
+   HOST — FINAL RESULTS
+   ══════════════════════════════════════════════════════════ */
+async function showHostFinalResults() {
+  removeAllListeners();
+  stopTimer();
+  if (!db || !S.roomCode) return;
+
+  const [pSnap, gSnap] = await Promise.all([
+    db.ref(`rooms/${S.roomCode}/players`).once('value'),
+    db.ref(`rooms/${S.roomCode}/gptBot`).once('value')
+  ]);
+
+  const sorted = getSortedPlayers(pSnap.val() || {}, gSnap.val());
+
+  document.getElementById('host-podium').innerHTML    = buildPodium(sorted);
+  document.getElementById('host-final-lb').innerHTML  = buildLeaderboardRows(sorted, null, true);
+
+  showScreen('screen-host-final');
+  launchConfetti();
+}
+
+async function hostNewGame() {
+  if (!db || !S.roomCode) return;
+  await db.ref(`rooms/${S.roomCode}`).remove();
+  showScreen('screen-host-create');
+}
+
+/* ══════════════════════════════════════════════════════════
+   STUDENT — JOIN SCREEN HELPERS
+   ══════════════════════════════════════════════════════════ */
+function checkNoMajor() {
+  const v = document.getElementById('join-major').value;
+  document.getElementById('no-major-note').style.display = v === 'none' ? 'block' : 'none';
+}
+
+/* ══════════════════════════════════════════════════════════
+   STUDENT — JOIN
+   ══════════════════════════════════════════════════════════ */
+async function studentJoin() {
+  if (!db) { alert('Firebase غير مهيأ'); return; }
+
+  const code  = document.getElementById('join-code').value.trim().toUpperCase();
+  const name  = document.getElementById('join-name').value.trim();
+  const major = document.getElementById('join-major').value;
+  const errEl = document.getElementById('join-error');
+
+  errEl.textContent = '';
+
+  if (!code)  { errEl.textContent = 'أدخل كود الغرفة';  return; }
+  if (!name)  { errEl.textContent = 'أدخل اسمك';        return; }
+
+  // Verify room exists
+  const snap = await db.ref(`rooms/${code}`).once('value');
+  if (!snap.exists()) {
+    errEl.textContent = 'كود الغرفة غير صحيح ❌';
+    return;
+  }
+
+  const roomData = snap.val();
+  if (roomData.status !== 'lobby') {
+    errEl.textContent = 'اللعبة بدأت بالفعل';
+    return;
+  }
+
+  S.playerId    = genPlayerId();
+  S.playerName  = name;
+  S.playerMajor = major;
+  S.roomCode    = code;
+  S.roomMajor   = roomData.major;
+  S.role        = 'student';
+  S.questions   = QUESTIONS[S.roomMajor];
+
+  await db.ref(`rooms/${code}/players/${S.playerId}`).set({
+    name,
+    major,
+    score: 0,
+    answers: {}
+  });
+
+  // Cleanup on disconnect
+  db.ref(`rooms/${code}/players/${S.playerId}`).onDisconnect().remove();
+
+  showStudentLobby(code);
+}
+
+/* ══════════════════════════════════════════════════════════
+   STUDENT — LOBBY (WAITING)
+   ══════════════════════════════════════════════════════════ */
+function showStudentLobby(code) {
+  removeAllListeners();
+  showScreen('screen-student-lobby');
+
+  const roomRef = db.ref(`rooms/${code}`);
+  addListener(roomRef, 'value', snap => {
+    if (!snap.exists()) return;
+    const room = snap.val();
+    const players = room.players || {};
+
+    // Update lobby list
+    document.getElementById('student-lobby-count').textContent = `👥 ${Object.keys(players).length} لاعب`;
+    const list = document.getElementById('student-lobby-list');
+    list.innerHTML = `<li class="player-item" data-gpt="1">
+      <div class="player-avatar bot-avatar">🤖</div>
+      <span class="player-name">GPT-Bot</span>
+      <span class="player-status" style="color:var(--warning);">مدمج</span>
+    </li>`;
+    Object.entries(players).forEach(([id, p]) => {
+      const li = document.createElement('li');
+      li.className = 'player-item';
+      const isMe = id === S.playerId;
+      li.innerHTML = `<div class="player-avatar ${isMe?'':''}">
+          ${p.name?.[0]?.toUpperCase()||'?'}
+        </div>
+        <span class="player-name">${escHtml(p.name)}${isMe?' (أنت)':''}</span>`;
+      list.appendChild(li);
+    });
+
+    // Check if game started
+    if (room.status === 'question') {
+      S.currentQuestion  = room.currentQuestion || 0;
+      S.questionStartMs  = room.questionStartTime || Date.now();
+      S.questions        = QUESTIONS[S.roomMajor];
+      showStudentQuestion(S.currentQuestion);
+    }
+    if (room.status === 'finished') {
+      showStudentFinalResults();
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   STUDENT — QUESTION
+   ══════════════════════════════════════════════════════════ */
+function showStudentQuestion(qIdx) {
+  removeAllListeners();
+  stopTimer();
+  S.currentQuestion = qIdx;
+  S.answered        = false;
+
+  const q = S.questions[qIdx];
+  if (!q) return;
+
+  document.getElementById('student-q-number').textContent = `سؤال ${qIdx+1} / 5`;
+
+  // Reset image
+  const img = document.getElementById('student-q-img');
+  const err = document.getElementById('student-img-err');
+  img.style.display = 'block'; err.style.display = 'none';
+  img.src = q.image || 'acm-logo.png';
+
+  document.getElementById('student-q-text').textContent = q.question;
+
+  // Reset answer UI
+  const input   = document.getElementById('student-answer-input');
+  const sentMsg = document.getElementById('answer-sent-msg');
+  const hintBox = document.getElementById('student-hint');
+  const hintTxt = document.getElementById('student-hint-text');
+
+  input.value    = '';
+  input.disabled = false;
+  sentMsg.style.display  = 'none';
+  hintBox.classList.remove('visible');
+  hintTxt.textContent = q.hint;
+
+  showScreen('screen-student-question');
+
+  // Calculate elapsed time so far (server started question at questionStartMs)
+  const elapsed       = (Date.now() - S.questionStartMs) / 1000000;
+  const remaining     = Math.max(0, 30 - elapsed);
+
+  // Show hint if already past 30s
+  if (remaining <= 10) hintBox.classList.add('visible');
+
+  startTimer(remaining, 'student-timer-circle', 'student-timer-text',
+    (rem) => {
+      if (rem <= 10) hintBox.classList.add('visible');
+    },
+    () => {
+      // Time's up — auto-submit empty
+      if (!S.answered) autoSubmitEmpty(qIdx);
+    }
+  );
+
+  // Live player status
+  listenStudentQuestionPlayers(qIdx);
+
+  // Listen for host control (result phase / next question / finish)
+  const roomRef = db.ref(`rooms/${S.roomCode}`);
+  addListener(roomRef, 'value', snap => {
+    if (!snap.exists()) return;
+    const room = snap.val();
+    // Host triggered result phase for this question
+    if (room.status === 'result' && room.currentQuestion === qIdx) {
+      showStudentResult(qIdx, room);
+    // Host moved to a different question
+    } else if (room.status === 'question' && room.currentQuestion !== qIdx) {
+      S.currentQuestion = room.currentQuestion;
+      S.questionStartMs = room.questionStartTime || Date.now();
+      showStudentQuestion(room.currentQuestion);
+    // Game over
+    } else if (room.status === 'finished') {
+      showStudentFinalResults();
+    }
+  });
+}
+
+async function autoSubmitEmpty(qIdx) {
+  if (S.answered || !db || !S.roomCode) return;
+  S.answered = true;
+  await db.ref(`rooms/${S.roomCode}/players/${S.playerId}/answers/q${qIdx}`).set({
+    answer: '', correct: false, score: 0, answered: true
+  });
+}
+
+function listenStudentQuestionPlayers(qIdx) {
+  const ref = db.ref(`rooms/${S.roomCode}/players`);
+  addListener(ref, 'value', snap => {
+    const players = snap.val() || {};
+    const grid    = document.getElementById('live-player-grid');
+    grid.innerHTML = '';
+
+    // GPT-Bot chip
+    const gptDiv = document.createElement('div');
+    gptDiv.className = 'live-player-chip';
+    gptDiv.innerHTML = `<span>🤖</span><span class="chip-name">GPT-Bot</span>
+      <span class="chip-status">🤔</span>`;
+
+    db.ref(`rooms/${S.roomCode}/gptBot/answers/q${qIdx}`).once('value', gs => {
+      if (gs.val()?.answered) gptDiv.querySelector('.chip-status').textContent = '✓';
+      grid.appendChild(gptDiv);
+    });
+
+    Object.entries(players).forEach(([id, p]) => {
+      const answered = p.answers?.[`q${qIdx}`]?.answered;
+      const isMe     = id === S.playerId;
+      const div      = document.createElement('div');
+      div.className  = 'live-player-chip';
+      div.innerHTML  = `<span>${p.name?.[0]?.toUpperCase()||'?'}</span>
+        <span class="chip-name">${escHtml(p.name)}${isMe?' (أنت)':''}</span>
+        <span class="chip-status ${answered ? 'status-answered' : ''}">${answered ? '✓' : '💭'}</span>`;
+      grid.appendChild(div);
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   STUDENT — SUBMIT ANSWER
+   ══════════════════════════════════════════════════════════ */
+async function studentSubmitAnswer() {
+  if (S.answered || !db || !S.roomCode) return;
+  const input   = document.getElementById('student-answer-input');
+  const userAns = input.value.trim();
+  if (!userAns) return;
+
+  S.answered = true;
+  input.disabled = true;
+
+  const q       = S.questions[S.currentQuestion];
+  const elapsed = Math.min(60, (Date.now() - S.questionStartMs) / 1000);
+  const correct = checkAnswer(userAns, q.accepted);
+  const score   = correct ? calcScore(elapsed) : 0;
+
+  document.getElementById('answer-sent-msg').style.display = 'block';
+
+  await db.ref(`rooms/${S.roomCode}/players/${S.playerId}`).update({
+    [`answers/q${S.currentQuestion}`]: {
+      answer:   userAns,
+      correct,
+      score,
+      answered: true
+    },
+    score: firebase.database.ServerValue.increment(score)
+  });
+
+  // Check if all answered → host can advance (done server-side by host)
+  // Also check room status in case host already moved
+  const roomSnap = await db.ref(`rooms/${S.roomCode}`).once('value');
+  const room     = roomSnap.val();
+  if (room?.status === 'result' && room?.currentQuestion === S.currentQuestion) {
+    showStudentResult(S.currentQuestion, room);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   STUDENT — PER-QUESTION RESULT
+   ══════════════════════════════════════════════════════════ */
+async function showStudentResult(qIdx, roomData) {
+  removeAllListeners();
+  stopTimer();
+
+  const q = S.questions[qIdx];
+
+  // Get my answer
+  const myAnswerSnap = await db.ref(`rooms/${S.roomCode}/players/${S.playerId}/answers/q${qIdx}`).once('value');
+  const myAns = myAnswerSnap.val() || {};
+
+  // Emoji + text
+  const correct = myAns.correct === true;
+  document.getElementById('result-emoji').textContent      = correct ? '🎉' : '😢';
+  const rt = document.getElementById('result-correct-text');
+  rt.textContent  = correct ? 'إجابة صحيحة! ✅' : 'إجابة خاطئة ❌';
+  rt.className    = 'result-correct-text ' + (correct ? 'correct' : 'wrong');
+  document.getElementById('result-score-earned').textContent = `+${myAns.score || 0} نقطة`;
+
+  // Show correct answer if wrong
+  const caDiv  = document.getElementById('result-correct-answer');
+  const caText = document.getElementById('correct-answer-text');
+  if (!correct) {
+    caDiv.style.display   = 'block';
+    caText.textContent    = q.accepted[0];
+  } else {
+    caDiv.style.display   = 'none';
+  }
+
+  // GPT-Bot result
+  const gptSnap = await db.ref(`rooms/${S.roomCode}/gptBot/answers/q${qIdx}`).once('value');
+  const gptAns  = gptSnap.val() || {};
+  const gptEl   = document.getElementById('gpt-result-text');
+  if (gptAns.answered) {
+    gptEl.innerHTML = `GPT-Bot أجاب: <strong>"${escHtml(gptAns.answer || '—')}"</strong> — ${gptAns.correct ? '✅ صحيح' : '❌ خطأ'} (+${gptAns.score||0} pts)`;
+  } else {
+    gptEl.textContent = 'GPT-Bot: لم يُجب بعد...';
+  }
+
+  // Leaderboard
+  const [pSnap, gSnap] = await Promise.all([
+    db.ref(`rooms/${S.roomCode}/players`).once('value'),
+    db.ref(`rooms/${S.roomCode}/gptBot`).once('value')
+  ]);
+  const sorted = getSortedPlayers(pSnap.val() || {}, gSnap.val());
+  document.getElementById('student-result-lb').innerHTML = buildLeaderboardRows(sorted, S.playerId, true);
+
+  showScreen('screen-student-result');
+
+  // Listen for next question or finish
+  const roomRef = db.ref(`rooms/${S.roomCode}`);
+  addListener(roomRef, 'value', snap => {
+    if (!snap.exists()) return;
+    const room = snap.val();
+    if (room.status === 'question' && room.currentQuestion > qIdx) {
+      S.currentQuestion = room.currentQuestion;
+      S.questionStartMs = room.questionStartTime || Date.now();
+      showStudentQuestion(room.currentQuestion);
+    } else if (room.status === 'finished') {
+      showStudentFinalResults();
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   STUDENT — FINAL RESULTS
+   ══════════════════════════════════════════════════════════ */
+async function showStudentFinalResults() {
+  removeAllListeners();
+  stopTimer();
+
+  const [pSnap, gSnap] = await Promise.all([
+    db.ref(`rooms/${S.roomCode}/players`).once('value'),
+    db.ref(`rooms/${S.roomCode}/gptBot`).once('value')
+  ]);
+
+  const players = pSnap.val() || {};
+  const gptBot  = gSnap.val() || {};
+  const sorted  = getSortedPlayers(players, gptBot);
+
+  // Podium
+  document.getElementById('student-podium').innerHTML   = buildPodium(sorted);
+  document.getElementById('student-final-lb').innerHTML = buildLeaderboardRows(sorted, S.playerId, true);
+
+  // Badges
+  const me       = players[S.playerId] || {};
+  const myScore  = me.score || 0;
+  const gptScore = gptBot.score || 0;
+  const myRank   = sorted.findIndex(p => p.id === S.playerId);
+  const badges   = [];
+
+  // All correct?
+  const myAnswers = me.answers || {};
+  const allCorrect = [0,1,2,3,4].every(i => myAnswers[`q${i}`]?.correct === true);
+  if (allCorrect) badges.push({ icon: '⭐', label: 'إجابات مثالية!' });
+
+  // Beat GPT-Bot?
+  if (myScore > gptScore) badges.push({ icon: '🤖', label: 'هزمت الذكاء الاصطناعي!' });
+
+  // Ranked 1st?
+  if (myRank === 0 && sorted[0]?.id === S.playerId) badges.push({ icon: '🏆', label: 'بطل التحدي!' });
+
+  const badgesEl = document.getElementById('student-badges');
+  badgesEl.innerHTML = badges.map(b =>
+    `<div class="badge">${b.icon} ${b.label}</div>`
+  ).join('');
+
+  showScreen('screen-student-final');
+  if (myRank === 0 && sorted[0]?.id === S.playerId) launchConfetti();
+}
+
+function studentPlayAgain() {
+  S = { role: null, roomCode: null, playerId: null, playerName: null,
+        playerMajor: null, roomMajor: null, currentQuestion: 0,
+        questionStartMs: 0, answered: false, timerInterval: null, questions: [] };
+  removeAllListeners();
+  stopTimer();
+  showScreen('screen-student-join');
+  document.getElementById('join-error').textContent = '';
+  document.getElementById('join-code').value  = '';
+  document.getElementById('join-name').value  = '';
+}
+
+/* ══════════════════════════════════════════════════════════
+   CONFETTI
+   ══════════════════════════════════════════════════════════ */
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.display = 'block';
+
+  const colors = ['#818cf8','#60a5fa','#a78bfa','#c4b5fd','#38bdf8','#7c3aed','#e0e7ff','#4a7cf7'];
+  const particles = Array.from({ length: 180 }, () => ({
+    x:    Math.random() * canvas.width,
+    y:    -10 - Math.random() * 100,
+    w:    6  + Math.random() * 8,
+    h:    8  + Math.random() * 6,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx:   (Math.random() - 0.5) * 4,
+    vy:   1.5 + Math.random() * 2.5,
+    rot:  Math.random() * 360,
+    rv:   (Math.random() - 0.5) * 8,
+    gravity: 0.04
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      p.x   += p.vx;
+      p.y   += p.vy;
+      p.vy  += p.gravity;
+      p.rot += p.rv;
+      if (p.y < canvas.height + 20) alive = true;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (alive && frame < 400) requestAnimationFrame(draw);
+    else canvas.style.display = 'none';
+  }
+  draw();
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+
+  // Auto-fill room code if opened via QR link (?room=TECH-1234)
+  const params = new URLSearchParams(window.location.search);
+  const roomParam = params.get('room');
+  if (roomParam) {
+    showScreen('screen-student-join');
+    document.getElementById('join-code').value = roomParam.toUpperCase();
+    document.getElementById('join-name').focus();
+  } else {
+    showScreen('screen-role');
+  }
+});
+
+</script>
+  </body>
+</html>
