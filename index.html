@@ -337,11 +337,18 @@
       justify-content: center;
       position: relative;
     }
+    @keyframes unblur {
+      from { filter: blur(18px); }
+      to   { filter: blur(0px); }
+    }
     .q-image {
       width: 100%;
       height: 100%;
       object-fit: contain;
       background: #f3f4f6;
+    }
+    .q-image.blurring {
+      animation: unblur 30s linear forwards;
     }
     .q-image-error {
       display: none;
@@ -1167,38 +1174,38 @@ const QUESTIONS = {
       accepted: ['خرسانة','بيتون','concrete','خرسانة مسلحة']
     }
   ],
-  none: [
-    {
-      image:    '',
-      question: 'ما اسم هذه القطعة؟',
-      hint:     'تساعد الحاسوب على تشغيل البرامج',
-      accepted: ['ram','ذاكرة','memory','ذاكرة وصول عشوائي']
-    },
-    {
-      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Intel_CPU_Core_i7_2600K_Sandy_Bridge_top.jpg/320px-Intel_CPU_Core_i7_2600K_Sandy_Bridge_top.jpg',
-      question: 'ما هذه القطعة في الحاسوب؟',
-      hint:     'عقل الجهاز',
-      accepted: ['cpu','معالج','processor','المعالج']
-    },
-    {
-      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/LEDs.jpg/320px-LEDs.jpg',
-      question: 'ما اسم هذه المكونات الصغيرة؟',
-      hint:     'تُستخدم في الإضاءة',
-      accepted: ['led','ليد','صمام ضوئي']
-    },
-    {
-      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Doric_order_closeup.jpg/240px-Doric_order_closeup.jpg',
-      question: 'ما هذا الشكل المعماري؟',
-      hint:     'يُستخدم في المباني القديمة',
-      accepted: ['دوري','دوريك','doric','عمود']
-    },
-    {
-      image:    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Pratt_Truss.svg/320px-Pratt_Truss.svg.png',
-      question: 'ما اسم هذا الهيكل؟',
-      hint:     'شكل مثلثي يُستخدم في الجسور',
-      accepted: ['truss','جمالون','تروس','هيكل مثلثي']
-    }
-  ]
+ none: [
+  {
+    image:    'none/Earth.jpeg',
+    question: 'ما اسم هذا الكوكب؟',
+    hint:     'نحن نعيش عليه',
+    accepted: ['الأرض', 'earth', 'كوكب الأرض']
+  },
+  {
+    image:    'none/paris.jpeg',
+    question: 'في أي مدينة يوجد هذا البرج الشهير؟',
+    hint:     'عاصمة فرنسا',
+    accepted: ['باريس', 'paris', 'فرنسا']
+  },
+  {
+    image:    'none/Chess.jpeg',
+    question: 'ما اسم هذه اللعبة؟',
+    hint:     'لعبة تفكير بين لاعبين على رقعة بيضاء وسوداء',
+    accepted: ['شطرنج', 'chess']
+  },
+  {
+    image:    'none/compass.jpeg',
+    question: 'ما اسم هذه الأداة وما وظيفتها؟',
+    hint:     'تُستخدم لتحديد الاتجاهات',
+    accepted: ['بوصلة', 'compass', 'بوصله']
+  },
+  {
+    image:    'none/hourglass.jpeg',
+    question: 'ما اسم هذه الأداة؟',
+    hint:     'تُستخدم لقياس الوقت بالرمل',
+    accepted: ['ساعة رملية', 'رملية', 'hourglass', 'ساعة']
+  }
+]
 };
 
 /* ══════════════════════════════════════════════════════════
@@ -1550,6 +1557,9 @@ function showHostQuestion(qIdx) {
   const err = document.getElementById('host-img-err');
   img.style.display = 'block'; err.style.display = 'none';
   img.src = q.image || 'acm-logo.png';
+  img.classList.remove('blurring');
+  void img.offsetWidth; // force reflow to restart animation
+  img.classList.add('blurring');
 
   document.getElementById('host-q-text').textContent = q.question;
   document.getElementById('host-answered-count').textContent = `⌛ 0 / ? أجابوا`;
@@ -1830,6 +1840,9 @@ function showStudentQuestion(qIdx) {
   const err = document.getElementById('student-img-err');
   img.style.display = 'block'; err.style.display = 'none';
   img.src = q.image || 'acm-logo.png';
+  img.classList.remove('blurring');
+  void img.offsetWidth; // force reflow to restart animation
+  img.classList.add('blurring');
 
   document.getElementById('student-q-text').textContent = q.question;
 
