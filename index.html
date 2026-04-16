@@ -364,10 +364,22 @@
       font-size: 1.15rem;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
       line-height: 1.5;
       width: 100%;
       max-width: 560px;
+    }
+    .q-text-en {
+      font-size: 0.92rem;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 12px;
+      line-height: 1.4;
+      width: 100%;
+      max-width: 560px;
+      color: var(--muted);
+      direction: ltr;
+      font-style: italic;
     }
 
     .hint-box {
@@ -382,6 +394,14 @@
       max-width: 560px;
       display: none;
       animation: fadeIn 0.3s ease;
+    }
+    .hint-en {
+      display: block;
+      font-size: 0.82rem;
+      color: rgba(245,158,11,0.75);
+      direction: ltr;
+      margin-top: 4px;
+      font-style: italic;
     }
     .hint-box.visible { display: block; }
 
@@ -826,6 +846,7 @@
       </div>
 
       <div class="q-text" id="host-q-text"></div>
+      <div class="q-text-en" id="host-q-text-en"></div>
 
       <div class="answered-count" id="host-answered-count">⌛ 0 / 0 أجابوا</div>
 
@@ -954,9 +975,10 @@
       </div>
 
       <div class="q-text" id="student-q-text"></div>
+      <div class="q-text-en" id="student-q-text-en"></div>
 
       <div class="hint-box" id="student-hint">💡 <span
-          id="student-hint-text"></span></div>
+          id="student-hint-text"></span><span class="hint-en" id="student-hint-text-en"></span></div>
 
       <div class="answer-area">
         <input type="text" id="student-answer-input"
@@ -1079,133 +1101,175 @@ const HOST_PASSWORD = 'ACM2025';
 const QUESTIONS = {
   cs: [
     {
-      image:    'cs/ram.jpg',
-      question: 'ما اسم هذه القطعة وما وظيفتها؟',
-      hint:     'تخزن البيانات مؤقتاً أثناء تشغيل البرامج',
-      accepted: ['ram','ذاكرة','ذاكرة وصول عشوائي','memory']
+      image:       'cs/ram.jpg',
+      question:    'ما اسم هذه القطعة وما وظيفتها؟',
+      question_en: 'What is this component and what does it do?',
+      hint:        'تخزن البيانات مؤقتاً أثناء تشغيل البرامج',
+      hint_en:     'Temporarily stores data while programs are running',
+      accepted:    ['ram','ذاكرة','ذاكرة وصول عشوائي','memory']
     },
     {
-      image:    'cs/cpu.jpg',
-      question: 'ما هذه القطعة وما دورها في الحاسوب؟',
-      hint:     'تُعتبر عقل الحاسوب',
-      accepted: ['cpu','معالج','processor','المعالج المركزي']
+      image:       'cs/cpu.jpg',
+      question:    'ما هذه القطعة وما دورها في الحاسوب؟',
+      question_en: 'What is this component and what is its role in a computer?',
+      hint:        'تُعتبر عقل الحاسوب',
+      hint_en:     'Considered the brain of the computer',
+      accepted:    ['cpu','معالج','processor','المعالج المركزي']
     },
     {
-      image:    'cs/motherboard.jpg',
-      question: 'ما اسم هذه القطعة التي تربط جميع مكونات الحاسوب؟',
-      hint:     'كل القطع الأخرى تتصل بها مباشرة',
-      accepted: ['motherboard','لوحة أم','اللوحة الأم','لوحة']
+      image:       'cs/motherboard.jpg',
+      question:    'ما اسم هذه القطعة التي تربط جميع مكونات الحاسوب؟',
+      question_en: 'What is this component that connects all computer parts?',
+      hint:        'كل القطع الأخرى تتصل بها مباشرة',
+      hint_en:     'All other parts connect directly to it',
+      accepted:    ['motherboard','لوحة أم','اللوحة الأم','لوحة']
     },
     {
-      image:    'cs/gpu.jpg',
-      question: 'ما وظيفة هذه القطعة وفي أي تطبيقات تُستخدم؟',
-      hint:     'تُستخدم في الألعاب والتصميم ثلاثي الأبعاد',
-      accepted: ['gpu','كارت شاشة','معالج رسوميات','graphics card','كرت شاشة']
+      image:       'cs/gpu.jpg',
+      question:    'ما وظيفة هذه القطعة وفي أي تطبيقات تُستخدم؟',
+      question_en: 'What does this component do and in what applications is it used?',
+      hint:        'تُستخدم في الألعاب والتصميم ثلاثي الأبعاد',
+      hint_en:     'Used in gaming and 3D design',
+      accepted:    ['gpu','كارت شاشة','معالج رسوميات','graphics card','كرت شاشة']
     },
     {
-      image:    'cs/ssd.jpg',
-      question: 'ما الفرق بين هذه القطعة والـ RAM؟',
-      hint:     'تخزين دائم لا يُمسح عند إيقاف الجهاز',
-      accepted: ['ssd','هارد','قرص صلب','storage','hard disk']
+      image:       'cs/ssd.jpg',
+      question:    'ما الفرق بين هذه القطعة والـ RAM؟',
+      question_en: 'What is the difference between this component and RAM?',
+      hint:        'تخزين دائم لا يُمسح عند إيقاف الجهاز',
+      hint_en:     'Permanent storage that is not erased when the device is off',
+      accepted:    ['ssd','هارد','قرص صلب','storage','hard disk']
     }
   ],
 
   ee: [
     {
-      image:    'ee/diode.png',
-      question: 'ما اسم هذا المكون الكهربائي؟',
-      hint:     'يسمح بمرور التيار في اتجاه واحد فقط',
-      accepted: ['diode','ثنائي','صمام ثنائي','ديود']
+      image:       'ee/diode.png',
+      question:    'ما اسم هذا المكون الكهربائي؟',
+      question_en: 'What is the name of this electrical component?',
+      hint:        'يسمح بمرور التيار في اتجاه واحد فقط',
+      hint_en:     'Allows current to flow in one direction only',
+      accepted:    ['diode','ثنائي','صمام ثنائي','ديود']
     },
     {
-      image:    'ee/capacitor.jpg',
-      question: 'ما وظيفة هذا المكون في الدوائر الكهربائية؟',
-      hint:     'يخزن الشحنة الكهربائية ويُطلقها عند الحاجة',
-      accepted: ['capacitor','مكثف','كابسيتور']
+      image:       'ee/capacitor.jpg',
+      question:    'ما وظيفة هذا المكون في الدوائر الكهربائية؟',
+      question_en: 'What is the function of this component in electrical circuits?',
+      hint:        'يخزن الشحنة الكهربائية ويُطلقها عند الحاجة',
+      hint_en:     'Stores electrical charge and releases it when needed',
+      accepted:    ['capacitor','مكثف','كابسيتور']
     },
     {
-      image:    'ee/resistor.jpg',
-      question: 'ما اسم هذا المكون ووظيفته؟',
-      hint:     'يُقلل تدفق التيار الكهربائي في الدائرة',
-      accepted: ['resistor','مقاومة','مقاوم','ريزيستور']
+      image:       'ee/resistor.jpg',
+      question:    'ما اسم هذا المكون ووظيفته؟',
+      question_en: 'What is the name of this component and its function?',
+      hint:        'يُقلل تدفق التيار الكهربائي في الدائرة',
+      hint_en:     'Reduces the flow of electric current in the circuit',
+      accepted:    ['resistor','مقاومة','مقاوم','ريزيستور']
     },
     {
-      image:    'ee/transformer.jpg',
-      question: 'ما وظيفة هذا الجهاز الكهربائي؟',
-      hint:     'يرفع أو يخفض قيمة الجهد الكهربائي',
-      accepted: ['transformer','محول','ترانسفورمر','محول كهربائي']
+      image:       'ee/transformer.jpg',
+      question:    'ما وظيفة هذا الجهاز الكهربائي؟',
+      question_en: 'What is the function of this electrical device?',
+      hint:        'يرفع أو يخفض قيمة الجهد الكهربائي',
+      hint_en:     'Steps up or steps down electrical voltage',
+      accepted:    ['transformer','محول','ترانسفورمر','محول كهربائي']
     },
     {
-      image:    'ee/light emitting diode.jpg',
-      question: 'ما اسم هذه المكونات وأين تُستخدم؟',
-      hint:     'تُستخدم في الإضاءة الحديثة وهي أكثر كفاءة من المصباح التقليدي',
-      accepted: ['led','ليد','صمام ضوئي','light emitting diode']
+      image:       'ee/light emitting diode.jpg',
+      question:    'ما اسم هذه المكونات وأين تُستخدم؟',
+      question_en: 'What are these components called and where are they used?',
+      hint:        'تُستخدم في الإضاءة الحديثة وهي أكثر كفاءة من المصباح التقليدي',
+      hint_en:     'Used in modern lighting, more efficient than traditional bulbs',
+      accepted:    ['led','ليد','صمام ضوئي','light emitting diode']
     }
   ],
+
   arch: [
     {
-      image:    'arch/doric.jpg',
-      question: 'ما اسم هذا النوع من الأعمدة في العمارة الكلاسيكية؟',
-      hint:     'النظام المعماري الأبسط والأقدم في اليونان',
-      accepted: ['دوري','دوريك','doric','العمود الدوري']
+      image:       'arch/doric.jpg',
+      question:    'ما اسم هذا النوع من الأعمدة في العمارة الكلاسيكية؟',
+      question_en: 'What type of column is this in classical architecture?',
+      hint:        'النظام المعماري الأبسط والأقدم في اليونان',
+      hint_en:     'The simplest and oldest architectural order in ancient Greece',
+      accepted:    ['دوري','دوريك','doric','العمود الدوري']
     },
     {
-      image:    'arch/beam.jpg',
-      question: 'ما اسم هذا العنصر الإنشائي الأفقي؟',
-      hint:     'يمتد أفقياً بين عمودين لحمل الأثقال',
-      accepted: ['كمرة','عارضة','beam','جائز','كمر']
+      image:       'arch/beam.jpg',
+      question:    'ما اسم هذا العنصر الإنشائي الأفقي؟',
+      question_en: 'What is the name of this horizontal structural element?',
+      hint:        'يمتد أفقياً بين عمودين لحمل الأثقال',
+      hint_en:     'Extends horizontally between two columns to carry loads',
+      accepted:    ['كمرة','عارضة','beam','جائز','كمر']
     },
     {
-      image:    'arch/truss.jpg',
-      question: 'ما اسم هذا الهيكل الإنشائي المثلثي؟',
-      hint:     'يُستخدم في الجسور والأسقف لتوزيع الأحمال',
-      accepted: ['truss','جمالون','تروس','جمالة']
+      image:       'arch/truss.jpg',
+      question:    'ما اسم هذا الهيكل الإنشائي المثلثي؟',
+      question_en: 'What is the name of this triangular structural system?',
+      hint:        'يُستخدم في الجسور والأسقف لتوزيع الأحمال',
+      hint_en:     'Used in bridges and roofs to distribute loads',
+      accepted:    ['truss','جمالون','تروس','جمالة']
     },
     {
-      image:    'arch/floor plan.jpg',
-      question: 'ما اسم هذا المخطط المعماري؟',
-      hint:     'يُظهر الطابق من منظور أفقي من الأعلى',
-      accepted: ['مسقط أفقي','floor plan','مسقط','مخطط','floor-plan']
+      image:       'arch/floor plan.jpg',
+      question:    'ما اسم هذا المخطط المعماري؟',
+      question_en: 'What is the name of this architectural drawing?',
+      hint:        'يُظهر الطابق من منظور أفقي من الأعلى',
+      hint_en:     'Shows the floor from a top-down horizontal view',
+      accepted:    ['مسقط أفقي','floor plan','مسقط','مخطط','floor-plan']
     },
     {
-      image:    'arch/concrete.jpg',
-      question: 'ما اسم هذه المادة الإنشائية الأساسية؟',
-      hint:     'خليط من الإسمنت والرمل والماء والحصى',
-      accepted: ['خرسانة','بيتون','concrete','خرسانة مسلحة']
+      image:       'arch/concrete.jpg',
+      question:    'ما اسم هذه المادة الإنشائية الأساسية؟',
+      question_en: 'What is the name of this basic structural material?',
+      hint:        'خليط من الإسمنت والرمل والماء والحصى',
+      hint_en:     'A mixture of cement, sand, water, and gravel',
+      accepted:    ['خرسانة','بيتون','concrete','خرسانة مسلحة']
     }
   ],
- none: [
-  {
-    image:    'none/Earth.jpeg',
-    question: 'ما اسم هذا الكوكب؟',
-    hint:     'نحن نعيش عليه',
-    accepted: ['الأرض', 'earth', 'كوكب الأرض']
-  },
-  {
-    image:    'none/paris.jpeg',
-    question: 'في أي مدينة يوجد هذا البرج الشهير؟',
-    hint:     'عاصمة فرنسا',
-    accepted: ['باريس', 'paris', 'فرنسا']
-  },
-  {
-    image:    'none/Chess.jpeg',
-    question: 'ما اسم هذه اللعبة؟',
-    hint:     'لعبة تفكير بين لاعبين على رقعة بيضاء وسوداء',
-    accepted: ['شطرنج', 'chess']
-  },
-  {
-    image:    'none/compass.jpeg',
-    question: 'ما اسم هذه الأداة وما وظيفتها؟',
-    hint:     'تُستخدم لتحديد الاتجاهات',
-    accepted: ['بوصلة', 'compass', 'بوصله']
-  },
-  {
-    image:    'none/hourglass.jpeg',
-    question: 'ما اسم هذه الأداة؟',
-    hint:     'تُستخدم لقياس الوقت بالرمل',
-    accepted: ['ساعة رملية', 'رملية', 'hourglass', 'ساعة']
-  }
-]
+
+  none: [
+    {
+      image:       'none/Earth.jpeg',
+      question:    'ما اسم هذا الكوكب؟',
+      question_en: 'What is the name of this planet?',
+      hint:        'نحن نعيش عليه',
+      hint_en:     'We live on it',
+      accepted:    ['الأرض','earth','كوكب الأرض']
+    },
+    {
+      image:       'none/paris.jpeg',
+      question:    'في أي مدينة يوجد هذا البرج الشهير؟',
+      question_en: 'In which city is this famous tower located?',
+      hint:        'عاصمة فرنسا',
+      hint_en:     'Capital of France',
+      accepted:    ['باريس','paris','فرنسا']
+    },
+    {
+      image:       'none/Chess.jpeg',
+      question:    'ما اسم هذه اللعبة؟',
+      question_en: 'What is the name of this game?',
+      hint:        'لعبة تفكير بين لاعبين على رقعة بيضاء وسوداء',
+      hint_en:     'A strategy game played on a black and white board',
+      accepted:    ['شطرنج','chess']
+    },
+    {
+      image:       'none/compass.jpeg',
+      question:    'ما اسم هذه الأداة وما وظيفتها؟',
+      question_en: 'What is this tool called and what does it do?',
+      hint:        'تُستخدم لتحديد الاتجاهات',
+      hint_en:     'Used to determine directions',
+      accepted:    ['بوصلة','compass','بوصله']
+    },
+    {
+      image:       'none/hourglass.jpeg',
+      question:    'ما اسم هذه الأداة؟',
+      question_en: 'What is the name of this tool?',
+      hint:        'تُستخدم لقياس الوقت بالرمل',
+      hint_en:     'Used to measure time with sand',
+      accepted:    ['ساعة رملية','رملية','hourglass','ساعة']
+    }
+  ]
 };
 
 /* ══════════════════════════════════════════════════════════
@@ -1562,6 +1626,7 @@ function showHostQuestion(qIdx) {
   img.classList.add('blurring');
 
   document.getElementById('host-q-text').textContent = q.question;
+  document.getElementById('host-q-text-en').textContent = q.question_en || '';
   document.getElementById('host-answered-count').textContent = `⌛ 0 / ? أجابوا`;
   document.getElementById('btn-next-q').disabled = true;
   document.getElementById('host-live-lb').innerHTML = '';
@@ -1845,6 +1910,7 @@ function showStudentQuestion(qIdx) {
   img.classList.add('blurring');
 
   document.getElementById('student-q-text').textContent = q.question;
+  document.getElementById('student-q-text-en').textContent = q.question_en || '';
 
   // Reset answer UI
   const input   = document.getElementById('student-answer-input');
@@ -1857,6 +1923,7 @@ function showStudentQuestion(qIdx) {
   sentMsg.style.display  = 'none';
   hintBox.classList.remove('visible');
   hintTxt.textContent = q.hint;
+  document.getElementById('student-hint-text-en').textContent = q.hint_en || '';
 
   showScreen('screen-student-question');
 
